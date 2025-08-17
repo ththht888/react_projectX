@@ -1,20 +1,18 @@
-import React, { useState } from "react";
-import { Button, AutoComplete, Select } from "antd";
+import React, { useState, useEffect } from "react";
+import { Button, AutoComplete } from "antd";
 import {
   SearchOutlined,
   ShoppingCartOutlined,
   LoginOutlined,
   ProductOutlined,
 } from "@ant-design/icons";
-const { Option } = Select;
 import "./Header.scss";
 
 function Header() {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -45,21 +43,12 @@ function Header() {
           <h1 className="logo">
             <span className="logo__text">{isMobile ? "GB" : "GrooveBay"}</span>
           </h1>
+
           <Button className="catalog-btn" type="primary">
             {isMobile ? <ProductOutlined /> : "Каталог"}
           </Button>
-          <div className="search-box">
-            <Select
-              className="select-category"
-              value={category}
-              onChange={(value) => setCategory(value)}
-              suffixIcon={isMobile ? null : undefined}
-            >
-              <Option value="all">{isMobile ? "" : "Все"}</Option>
-              <Option value="clothes">{isMobile ? "" : "Одежда"}</Option>
-              <Option value="shoes">{isMobile ? "" : "Обувь"}</Option>
-            </Select>
 
+          <div className="search-box">
             <AutoComplete
               className="search-input"
               placeholder="Поиск"
@@ -68,7 +57,6 @@ function Header() {
               onChange={(value) => setSearch(value)}
               filterOption={false}
             />
-
             <Button
               className="search-btn"
               type="primary"
@@ -77,6 +65,7 @@ function Header() {
             />
           </div>
         </div>
+
         <div className="header__right">
           <Button className="login-btn" type="default">
             {isMobile ? <LoginOutlined /> : "Войти"}

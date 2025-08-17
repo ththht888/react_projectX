@@ -36,13 +36,23 @@ $hover-cart-text: #006400;
     align-items: center;
     gap: 15px;
     margin-left: 5px;
+    flex: 0 0 auto;
   }
 }
 
 .logo {
+  font-family: "Grandstander", sans-serif;
   color: $white;
   font-size: 24px;
   margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.logo__text {
+  font-family: "Grandstander", sans-serif !important;
+  font-weight: 800;
+  letter-spacing: 0.5px;
 }
 
 .btn {
@@ -69,6 +79,7 @@ $hover-cart-text: #006400;
   border-color: $secondary-color !important;
   color: $white !important;
 }
+
 .catalog-btn.ant-btn:hover,
 .catalog-btn.ant-btn:focus,
 .catalog-btn.ant-btn:active {
@@ -86,20 +97,6 @@ $hover-cart-text: #006400;
   overflow: hidden;
   flex: 1;
   border: 1px solid #d9d9d9;
-
-  .ant-select {
-    border: none;
-
-    .ant-select-selector {
-      border: none !important;
-      box-shadow: none !important;
-    }
-
-    &:hover .ant-select-selector {
-      border-color: $hover-select-border !important;
-      border-width: 2px !important;
-    }
-  }
 
   .search-input {
     flex: 1;
@@ -158,72 +155,53 @@ $hover-cart-text: #006400;
     padding: 10px 15px;
 
     &_inner {
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 10px;
     }
 
     &_left {
-      flex: 1;
+      flex: 1 1 auto;
       min-width: 0;
+      max-width: calc(100% - 85px);
+      gap: 10px;
     }
 
     &__right {
-      gap: 10px;
+      gap: 6px;
+      flex: 0 0 80px;
+      justify-content: flex-end;
     }
   }
 
   .logo {
-    font-family: "Grandstander", sans-serif !important;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    color: $white;
-    margin: 0;
-    font-size: 24px;
-  }
-
-  @media (max-width: 768px) {
-    .logo {
-      font-size: 18px;
-    }
+    font-size: 18px;
   }
 
   .catalog-btn,
   .login-btn,
   .cart-btn {
-    min-width: 40px;
-    padding: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 4px;
   }
 
   .catalog-btn .anticon,
   .login-btn .anticon,
   .cart-btn .anticon {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
   }
 
   .search-box {
-    flex: 1;
-    min-width: 200px;
-
-    .select-category {
-      max-width: 40px;
-
-      .ant-select-selection-item {
-        display: none;
-      }
-    }
+    flex: 1 1 auto;
+    min-width: 140px;
+    width: 100%;
   }
-}
 
-.logo__text {
-  font-family: "Grandstander", sans-serif !important;
-  font-weight: 1000;
-  letter-spacing: .5px;
-}
-
-@media (max-width: 768px) {
-  .logo__text { font-size: 18px; }
+  .search-input {
+    width: 100%;
+  }
 }
