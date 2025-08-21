@@ -1,0 +1,248 @@
+$primary-color: #da70d6;
+$secondary-color: #9acd32;
+$accent-color: #ff69b4;
+$white: #fff;
+$max-width: 1200px;
+
+$hover-login-cart: #dda0dd;
+$hover-login-cart-text: #8b008b;
+$hover-search: #ffb6c1;
+$hover-search-icon: #ff1493;
+$hover-select-border: #ff1493;
+$hover-cart: #98fb98;
+$hover-cart-text: #006400;
+
+.header {
+  background: $primary-color;
+  padding: 15px 20px;
+
+  &_inner {
+    max-width: $max-width;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &_left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 5px;
+    flex: 0 0 auto;
+  }
+}
+
+.logo {
+  font-family: "Grandstander", sans-serif;
+  color: $white;
+  font-size: 24px;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.logo__textDesktop {
+  display: inline;
+}
+.logo__textMobile {
+  display: none;
+}
+
+.btn {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 16px;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.catalog-btn {
+  @extend .btn;
+  color: $white;
+  background: $secondary-color;
+  padding: 6px 12px;
+  border-radius: 4px;
+
+  .btn__icon {
+    margin-right: 8px;
+  }
+}
+
+.catalog-btn.ant-btn {
+  background: $secondary-color !important;
+  border-color: $secondary-color !important;
+  color: $white !important;
+}
+
+.catalog-btn.ant-btn:hover,
+.catalog-btn.ant-btn:focus,
+.catalog-btn.ant-btn:active {
+  background: $hover-cart !important;
+  border-color: $hover-cart !important;
+  color: $hover-cart-text !important;
+  opacity: 1;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: $white;
+  border-radius: 4px;
+  overflow: hidden;
+  flex: 1;
+  border: 1px solid #d9d9d9;
+
+  .search-input {
+    flex: 1;
+    border: none !important;
+
+    .ant-select-selector {
+      border: none !important;
+      box-shadow: none !important;
+    }
+  }
+
+  .search-btn {
+    border: none !important;
+    box-shadow: none !important;
+    background: $accent-color !important;
+    margin: 0;
+    border-radius: 0 4px 4px 0;
+    height: 32px;
+    min-width: 32px;
+    padding: 0 8px;
+
+    .anticon {
+      color: $white;
+    }
+
+    &:hover {
+      background: $hover-search !important;
+      .anticon {
+        color: $hover-search-icon !important;
+      }
+    }
+  }
+}
+
+.search-btn {
+  @extend .btn;
+  background: $accent-color;
+  padding: 6px 12px;
+}
+
+.login-btn,
+.cart-btn {
+  @extend .btn;
+  color: $white;
+
+  .btn__icon {
+    margin-right: 8px;
+  }
+
+  &:hover {
+    background: $hover-login-cart !important;
+    color: $hover-login-cart-text !important;
+    border-color: $hover-login-cart !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 10px 15px;
+
+    &_inner {
+      flex-wrap: nowrap;
+      gap: 10px;
+    }
+
+    &_left {
+      flex: 1 1 auto;
+      min-width: 0;
+      max-width: calc(100% - 85px);
+      gap: 10px;
+    }
+
+    &__right {
+      gap: 6px;
+      flex: 0 0 80px;
+      justify-content: flex-end;
+    }
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+  .logo__textDesktop {
+    display: none;
+  }
+  .logo__textMobile {
+    display: inline;
+  }
+
+  .catalog-btn,
+  .login-btn,
+  .cart-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+
+  .catalog-btn .btn__text,
+  .login-btn .btn__text,
+  .cart-btn .btn__text {
+    display: none;
+  }
+
+  .catalog-btn .btn__icon,
+  .login-btn .btn__icon,
+  .cart-btn .btn__icon {
+    margin-right: 0;
+  }
+
+  .catalog-btn .anticon,
+  .login-btn .anticon,
+  .cart-btn .anticon {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .search-box {
+    flex: 1 1 auto;
+    min-width: 140px;
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .logo__textDesktop {
+    display: inline;
+  }
+  .logo__textMobile {
+    display: none;
+  }
+
+  .catalog-btn .btn__text,
+  .login-btn .btn__text,
+  .cart-btn .btn__text {
+    display: inline;
+  }
+}
