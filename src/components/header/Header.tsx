@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, AutoComplete } from "antd";
 import {
   SearchOutlined,
@@ -10,15 +10,6 @@ import "./Header.scss";
 
 function Header() {
   const [search, setSearch] = useState("");
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const isMobile = windowWidth <= 768;
 
   const searchSuggestions = [
     { value: "iPhone 15" },
@@ -41,13 +32,13 @@ function Header() {
       <div className="header_inner">
         <div className="header_left">
           <h1 className="logo">
-            <span className="logo__text">{isMobile ? "GB" : "GrooveBay"}</span>
+            <span className="logo__textDesktop">GrooveBay</span>
+            <span className="logo__textMobile">GB</span>
           </h1>
-
           <Button className="catalog-btn" type="primary">
-            {isMobile ? <ProductOutlined /> : "Каталог"}
+            <ProductOutlined className="btn__icon" />
+            <span className="btn__text">Каталог</span>
           </Button>
-
           <div className="search-box">
             <AutoComplete
               className="search-input"
@@ -68,10 +59,12 @@ function Header() {
 
         <div className="header__right">
           <Button className="login-btn" type="default">
-            {isMobile ? <LoginOutlined /> : "Войти"}
+            <LoginOutlined className="btn__icon" />
+            <span className="btn__text">Войти</span>
           </Button>
           <Button className="cart-btn" type="default">
-            {isMobile ? <ShoppingCartOutlined /> : "Корзина"}
+            <ShoppingCartOutlined className="btn__icon" />
+            <span className="btn__text">Корзина</span>
           </Button>
         </div>
       </div>

@@ -49,10 +49,11 @@ $hover-cart-text: #006400;
   letter-spacing: 0.5px;
 }
 
-.logo__text {
-  font-family: "Grandstander", sans-serif !important;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+.logo__textDesktop {
+  display: inline;
+}
+.logo__textMobile {
+  display: none;
 }
 
 .btn {
@@ -72,6 +73,10 @@ $hover-cart-text: #006400;
   background: $secondary-color;
   padding: 6px 12px;
   border-radius: 4px;
+
+  .btn__icon {
+    margin-right: 8px;
+  }
 }
 
 .catalog-btn.ant-btn {
@@ -124,7 +129,6 @@ $hover-cart-text: #006400;
 
     &:hover {
       background: $hover-search !important;
-
       .anticon {
         color: $hover-search-icon !important;
       }
@@ -142,6 +146,10 @@ $hover-cart-text: #006400;
 .cart-btn {
   @extend .btn;
   color: $white;
+
+  .btn__icon {
+    margin-right: 8px;
+  }
 
   &:hover {
     background: $hover-login-cart !important;
@@ -176,6 +184,12 @@ $hover-cart-text: #006400;
   .logo {
     font-size: 18px;
   }
+  .logo__textDesktop {
+    display: none;
+  }
+  .logo__textMobile {
+    display: inline;
+  }
 
   .catalog-btn,
   .login-btn,
@@ -186,6 +200,18 @@ $hover-cart-text: #006400;
     min-width: 32px;
     height: 32px;
     padding: 4px;
+  }
+
+  .catalog-btn .btn__text,
+  .login-btn .btn__text,
+  .cart-btn .btn__text {
+    display: none;
+  }
+
+  .catalog-btn .btn__icon,
+  .login-btn .btn__icon,
+  .cart-btn .btn__icon {
+    margin-right: 0;
   }
 
   .catalog-btn .anticon,
@@ -203,5 +229,20 @@ $hover-cart-text: #006400;
 
   .search-input {
     width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .logo__textDesktop {
+    display: inline;
+  }
+  .logo__textMobile {
+    display: none;
+  }
+
+  .catalog-btn .btn__text,
+  .login-btn .btn__text,
+  .cart-btn .btn__text {
+    display: inline;
   }
 }
