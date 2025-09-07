@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { AutoComplete, Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
+import "./SearchBox.scss";
 
 const SearchBox: React.FC = () => {
   const [search, setSearch] = useState("");

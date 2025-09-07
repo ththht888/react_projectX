@@ -1,14 +1,20 @@
 const BASE_URL = "http://localhost:5000/api";
 
-type ApiOk<T = unknown> = {
-  ok: true;
-  data: T;
-  message?: string;
-  status: number;
-};
-type ApiErr = { ok: false; message: string; status: number };
+type Ok<T> = { ok: true; data: T; status: number; message?: string };
+type Err = { ok: false; status: number; message: string; raw?: any };
 
-async function parseResponse(res: Response) {
+function pickMsg(payload: any, fallback: string) {
+  if (!payload) return fallback;
+  return (
+    payload.message ||
+    payload.error ||
+    payload.detail ||
+    (Array.isArray(payload.errors) && payload.errors[0]) ||
+    fallback
+  );
+}
+
+async function parse(res: Response) {
   const ct = res.headers.get("content-type") || "";
   if (ct.includes("application/json")) {
     try {
@@ -25,80 +31,73 @@ async function parseResponse(res: Response) {
   }
 }
 
-function pickMessage(payload: any, fallback: string) {
-  if (!payload) return fallback;
-  return (
-    payload.message ||
-    payload.error ||
-    payload.detail ||
-    (Array.isArray(payload.errors) && payload.errors[0]) ||
-    fallback
-  );
-}
-
-async function postJson<T>(
-  path: string,
-  body: unknown
-): Promise<ApiOk<T> | ApiErr> {
+async function doFetch<T>(
+  url: string,
+  init: RequestInit
+): Promise<Ok<T> | Err> {
   try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    const payload = await parseResponse(res);
-
-    if (res.ok) {
+    console.log(
+      "[REQ]",
+      url,
+      init.body instanceof URLSearchParams
+        ? Object.fromEntries((init.body as URLSearchParams).entries())
+        : init.body
+    );
+    const res = await fetch(url, init);
+    const payload = await parse(res);
+    if (res.ok)
       return {
         ok: true,
         data: (payload ?? {}) as T,
-        message: payload?.message,
         status: res.status,
+        message: (payload as any)?.message,
       };
-    }
-    return {
+    const err: Err = {
       ok: false,
-      message: pickMessage(payload, `Ошибка ${res.status}`),
       status: res.status,
+      message: pickMsg(payload, `Ошибка ${res.status}`),
+      raw: payload,
     };
-  } catch (e) {
-    return { ok: false, message: "Нет связи с сервером", status: 0 };
-  }
-}
-
-async function getJson<T>(path: string): Promise<ApiOk<T> | ApiErr> {
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-
-    const payload = await parseResponse(res);
-
-    if (res.ok) {
-      return {
-        ok: true,
-        data: (payload ?? {}) as T,
-        message: payload?.message,
-        status: res.status,
-      };
-    }
-    return {
-      ok: false,
-      message: pickMessage(payload, `Ошибка ${res.status}`),
-      status: res.status,
-    };
+    console.warn("[RES]", url, res.status, payload);
+    return err;
   } catch {
-    return { ok: false, message: "Нет связи с сервером", status: 0 };
+    return { ok: false, status: 0, message: "Нет связи с сервером" };
   }
+}
+
+async function postWithFallbacks<T>(
+  path: string,
+  attempts: Array<() => RequestInit>
+) {
+  for (let i = 0; i < attempts.length; i++) {
+    const init = attempts[i]();
+    const res = await doFetch<T>(`${BASE_URL}${path}`, {
+      method: "POST",
+      headers: { Accept: "application/json", ...(init.headers || {}) },
+      body: init.body,
+    });
+    if (res.ok) return res;
+    if ((res as Err).status !== 400) return res;
+    if (i === attempts.length - 1) return res;
+  }
+  return { ok: false, status: 400, message: "Ошибка 400" } as Err;
 }
 
 export async function loginApi(login: string, password: string) {
-  return postJson<{ login: string }>("/login", { login, password });
+  return postWithFallbacks<{ login?: string; username?: string }>("/login", [
+    () => ({
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login, password }),
+    }),
+    () => ({
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: login, password }),
+    }),
+    () => ({
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ login, password }),
+    }),
+  ]);
 }
 
 export async function registerApi(input: {
@@ -107,15 +106,56 @@ export async function registerApi(input: {
   email?: string;
   phone?: string;
 }) {
-  const body: Record<string, any> = {
+  if (!input.login || !input.password || !input.email || !input.phone) {
+    return {
+      ok: false,
+      status: 400,
+      message: "Заполните логин, пароль, email и телефон",
+    } as Err;
+  }
+
+  const bodyStr = {
     login: input.login,
     password: input.password,
+    email: input.email,
+    phone: String(input.phone),
   };
-  if (input.email) body.email = input.email;
-  if (input.phone) {
-    body.phone = Number(input.phone);
-  }
-  return postJson("/create-client", body);
+  const bodyNum = {
+    login: input.login,
+    password: input.password,
+    email: input.email,
+    phone: Number(input.phone),
+  };
+  const bodyUserStr = {
+    username: input.login,
+    password: input.password,
+    email: input.email,
+    phone: String(input.phone),
+  };
+
+  return postWithFallbacks("/create-client", [
+    () => ({
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bodyStr),
+    }),
+    () => ({
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bodyNum),
+    }),
+    () => ({
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bodyUserStr),
+    }),
+    () => ({
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(
+        Object.entries(bodyStr).reduce((a, [k, v]) => {
+          a[k] = String(v);
+          return a;
+        }, {} as Record<string, string>)
+      ),
+    }),
+  ]);
 }
 
 export async function checkLoginApi(login: string) {
@@ -123,12 +163,11 @@ export async function checkLoginApi(login: string) {
     return {
       ok: true,
       data: { available: false },
-      message: "",
       status: 200,
-    } as ApiOk<{
-      available: boolean;
-    }>;
-  return getJson<{ available?: boolean }>(
-    `/check-login?login=${encodeURIComponent(login)}`
+      message: "",
+    } as Ok<{ available: boolean }>;
+  return doFetch<{ available?: boolean }>(
+    `${BASE_URL}/check-login?login=${encodeURIComponent(login)}`,
+    { method: "GET", headers: { Accept: "application/json" } }
   );
 }

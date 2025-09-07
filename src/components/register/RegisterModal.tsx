@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Form, Input, Modal, Space, message } from "antd";
+import { Button, Form, Input, Modal, message } from "antd";
 import {
   CheckCircleOutlined,
   LockOutlined,
@@ -8,13 +8,18 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { registerApi, loginApi } from "../../api/auth";
-import useLoginCheck from "./useLoginCheck";
+import useLoginCheck from "../hooks/useLoginCheck";
+import "./RegisterModal.scss";
 
 type Props = {
   open: boolean;
   onCancelBackToLogin: () => void;
   onCloseAll: () => void;
   onAutoLoggedIn: (userName: string) => void;
+  onNotify: (
+    type: "success" | "error" | "warning" | "info",
+    text: string
+  ) => void;
 };
 
 const RegisterModal: React.FC<Props> = ({
@@ -22,10 +27,10 @@ const RegisterModal: React.FC<Props> = ({
   onCancelBackToLogin,
   onCloseAll,
   onAutoLoggedIn,
+  onNotify,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = React.useState(false);
-
   const { state, onChangeLogin, suffix, validateStatus, help } = useLoginCheck({
     min: 5,
     max: 15,
@@ -33,61 +38,62 @@ const RegisterModal: React.FC<Props> = ({
 
   const submit = async () => {
     try {
-      const values = await form.validateFields();
-
+      const v = await form.validateFields();
       if (state === "taken") {
         message.error("Логин занят");
+        onNotify("error", "Логин занят");
         return;
       }
-
       setLoading(true);
 
       const reg = await registerApi({
-        login: values.login,
-        password: values.password,
-        email: values.email || undefined,
-        phone: values.phone || undefined,
+        login: v.login,
+        password: v.password,
+        email: v.email,
+        phone: v.phone,
       });
 
       if (!reg.ok) {
-        setLoading(false);
-        message.error(reg.message || "Не удалось зарегистрироваться");
+        const text = reg.message || "Не удалось зарегистрироваться";
+        message.error(text);
+        onNotify("error", text);
         return;
       }
 
-      message.success(reg.message || "Регистрация успешна");
+      const okText = reg.message || "Регистрация успешна";
+      message.success(okText);
+      onNotify("success", okText);
 
-      const sig = await loginApi(values.login, values.password);
+      const sig = await loginApi(v.login, v.password);
       if (!sig.ok) {
-        setLoading(false);
+        message.warning("Регистрация выполнена. Войдите вручную.");
+        onNotify("warning", "Регистрация выполнена. Войдите вручную.");
         onCancelBackToLogin();
         window.dispatchEvent(
-          new CustomEvent("prefill-login", { detail: values.login })
+          new CustomEvent("prefill-login", { detail: v.login })
         );
         return;
       }
 
-      const name = (sig.data as any)?.login || values.login;
+      const name = (sig.data as any)?.login || v.login;
       message.success("Вы вошли в систему");
+      onNotify("success", "Вы вошли в систему");
       form.resetFields();
-      setLoading(false);
       onAutoLoggedIn(name);
     } catch (err: any) {
-      if (err && Array.isArray(err.errorFields)) {
-        return;
+      if (!(err && Array.isArray(err.errorFields))) {
+        message.error("Ошибка. Проверьте подключение к серверу.");
+        onNotify("error", "Ошибка. Проверьте подключение к серверу.");
       }
-      console.error(err);
+    } finally {
       setLoading(false);
-      message.error("Что-то пошло не так. Проверьте подключение к серверу.");
     }
   };
 
-  const confirmSuffix =
+  const confirmOk =
     form.getFieldValue("password") &&
     form.getFieldValue("confirm") &&
-    form.getFieldValue("password") === form.getFieldValue("confirm") ? (
-      <CheckCircleOutlined style={{ color: "#52c41a" }} />
-    ) : null;
+    form.getFieldValue("password") === form.getFieldValue("confirm");
 
   return (
     <Modal
@@ -96,15 +102,16 @@ const RegisterModal: React.FC<Props> = ({
       onCancel={onCloseAll}
       maskClosable
       destroyOnHidden
+      rootClassName="register-modal"
       footer={
-        <Space style={{ width: "100%", justifyContent: "flex-end" }}>
+        <div className="modal-footer">
           <Button onClick={onCancelBackToLogin} disabled={loading}>
             Отмена
           </Button>
           <Button type="primary" onClick={submit} loading={loading}>
             Зарегистрировать
           </Button>
-        </Space>
+        </div>
       }
     >
       <Form layout="vertical" form={form} name="regForm" autoComplete="off">
@@ -154,8 +161,8 @@ const RegisterModal: React.FC<Props> = ({
             { min: 5, message: "Не менее 5 символов" },
             { max: 15, message: "Не более 15 символов" },
             ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value || getFieldValue("password") === value)
+              validator(_, val) {
+                if (!val || getFieldValue("password") === val)
                   return Promise.resolve();
                 return Promise.reject(new Error("пароли не совпадают"));
               },
@@ -166,25 +173,33 @@ const RegisterModal: React.FC<Props> = ({
             placeholder="повторите пароль"
             prefix={<LockOutlined />}
             maxLength={15}
-            suffix={confirmSuffix}
+            suffix={
+              confirmOk ? (
+                <CheckCircleOutlined style={{ color: "#52c41a" }} />
+              ) : null
+            }
           />
         </Form.Item>
 
         <Form.Item
-          label="Email (необязательно)"
+          label="Email"
           name="email"
           rules={[
+            { required: true, message: "Введите email" },
             { max: 50, message: "Не более 50 символов" },
             {
               validator: (_, value?: string) => {
-                if (!value) return Promise.resolve();
+                if (!value) return Promise.reject(new Error("Введите email"));
                 const okLen = value.length <= 50;
                 const okDomain =
                   value.endsWith("@yandex.ru") || value.endsWith("@mail.com");
-                if (okLen && okDomain) return Promise.resolve();
-                return Promise.reject(
-                  new Error("Только @yandex.ru или @mail.com, до 50 символов")
-                );
+                return okLen && okDomain
+                  ? Promise.resolve()
+                  : Promise.reject(
+                      new Error(
+                        "Только @yandex.ru или @mail.com, до 50 символов"
+                      )
+                    );
               },
             },
           ]}

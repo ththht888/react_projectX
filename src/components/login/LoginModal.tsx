@@ -1,13 +1,18 @@
 import React, { useEffect } from "react";
-import { Button, Form, Input, Modal, Space, message } from "antd";
+import { Button, Form, Input, Modal, message } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { loginApi } from "../../api/auth";
+import "./LoginModal.scss";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onOpenRegister: () => void;
   onLoggedIn: (userName: string) => void;
+  onNotify: (
+    type: "success" | "error" | "warning" | "info",
+    text: string
+  ) => void;
 };
 
 const LoginModal: React.FC<Props> = ({
@@ -15,6 +20,7 @@ const LoginModal: React.FC<Props> = ({
   onClose,
   onOpenRegister,
   onLoggedIn,
+  onNotify,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = React.useState(false);
@@ -31,24 +37,27 @@ const LoginModal: React.FC<Props> = ({
 
   const submit = async () => {
     try {
-      const values = await form.validateFields();
+      const v = await form.validateFields();
       setLoading(true);
-      const res = await loginApi(values.login, values.password);
-      if (res.ok) {
-        const name = (res.data as any)?.login || values.login;
-        message.success(res.message || "Успешный вход");
-        onLoggedIn(name);
-        form.resetFields();
-        setLoading(false);
-      } else {
-        message.error(res.message || "Неверные данные");
-        setLoading(false);
+      const res = await loginApi(v.login, v.password);
+      if (!res.ok) {
+        const text = res.message || "Неверные данные";
+        message.error(text);
+        onNotify("error", text);
+        return;
       }
+      const name = (res.data as any)?.login || v.login;
+      const okText = res.message || "Успешный вход";
+      message.success(okText);
+      onNotify("success", okText);
+      onLoggedIn(name);
+      form.resetFields();
     } catch (err: any) {
       if (!(err && Array.isArray(err.errorFields))) {
-        console.error(err);
         message.error("Не удалось выполнить вход");
+        onNotify("error", "Не удалось выполнить вход");
       }
+    } finally {
       setLoading(false);
     }
   };
@@ -60,22 +69,19 @@ const LoginModal: React.FC<Props> = ({
       onCancel={onClose}
       maskClosable
       destroyOnHidden
+      rootClassName="login-modal"
       footer={
-        <Space style={{ width: "100%", justifyContent: "space-between" }}>
-          <div>
-            <Button type="link" onClick={onOpenRegister} disabled={loading}>
-              Регистрация
-            </Button>
-          </div>
-          <div>
-            <Button onClick={onClose} disabled={loading}>
-              Отмена
-            </Button>
-            <Button type="primary" onClick={submit} loading={loading}>
-              Войти
-            </Button>
-          </div>
-        </Space>
+        <div className="modal-footer">
+          <Button type="link" onClick={onOpenRegister} disabled={loading}>
+            Регистрация
+          </Button>
+          <Button onClick={onClose} disabled={loading}>
+            Отмена
+          </Button>
+          <Button type="primary" onClick={submit} loading={loading}>
+            Войти
+          </Button>
+        </div>
       }
     >
       <Form form={form} layout="vertical" name="loginForm">

@@ -1,0 +1,14 @@
+.register-modal {
+  .ant-form-item {
+    margin-bottom: 12px;
+  }
+  .ant-input-suffix {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
