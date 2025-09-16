@@ -31,15 +31,24 @@ const RegisterModal: React.FC<Props> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = React.useState(false);
-  const { state, onChangeLogin, suffix, validateStatus, help } = useLoginCheck({
-    min: 5,
-    max: 15,
-  });
+  const {
+    state,
+    onChangeLogin,
+    suffix,
+    validateStatus,
+    help,
+    isTaken,
+    isChecking,
+  } = useLoginCheck({ min: 5, max: 15 });
 
   const submit = async () => {
     try {
       const v = await form.validateFields();
-      if (state === "taken") {
+      if (isChecking) {
+        message.warning("Проверяем логин...");
+        return;
+      }
+      if (isTaken) {
         message.error("Логин занят");
         onNotify("error", "Логин занят");
         return;
@@ -95,6 +104,8 @@ const RegisterModal: React.FC<Props> = ({
     form.getFieldValue("confirm") &&
     form.getFieldValue("password") === form.getFieldValue("confirm");
 
+  const disableSubmit = loading || isChecking || isTaken;
+
   return (
     <Modal
       title="Регистрация"
@@ -108,7 +119,12 @@ const RegisterModal: React.FC<Props> = ({
           <Button onClick={onCancelBackToLogin} disabled={loading}>
             Отмена
           </Button>
-          <Button type="primary" onClick={submit} loading={loading}>
+          <Button
+            type="primary"
+            onClick={submit}
+            loading={loading}
+            disabled={disableSubmit}
+          >
             Зарегистрировать
           </Button>
         </div>

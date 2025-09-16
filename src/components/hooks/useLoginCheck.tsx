@@ -1,65 +1,81 @@
-import React, { useEffect, useRef, useState } from "react";
-import { CheckCircleOutlined } from "@ant-design/icons";
-import { checkLoginApi } from "../../api/auth";
+import React from "react";
+import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 
-type State = "idle" | "checking" | "ok" | "taken";
+type State = "idle" | "invalid" | "checking" | "ok" | "taken";
 
-type Options = {
-  min: number;
-  max: number;
-  debounceMs?: number;
-};
+type Props = { min: number; max: number };
 
-export default function useLoginCheck(opts: Options) {
-  const { min, max, debounceMs = 400 } = opts;
+function useLoginCheck({ min, max }: Props) {
+  const [value, setValue] = React.useState("");
+  const [state, setState] = React.useState<State>("idle");
 
-  const [state, setState] = useState<State>("idle");
-  const timer = useRef<number | null>(null);
+  const controller = React.useRef<AbortController | null>(null);
+  const timer = React.useRef<number | null>(null);
 
-  const onChangeLogin = (value: string) => {
-    if (!value || value.length < min || value.length > max) {
-      setState("idle");
-      if (timer.current) window.clearTimeout(timer.current);
-      timer.current = null;
+  const onChangeLogin = (v: string) => {
+    setValue(v);
+    if (controller.current) controller.current.abort();
+    if (timer.current) window.clearTimeout(timer.current);
+
+    if (!v || v.length < min || v.length > max) {
+      setState(v ? "invalid" : "idle");
       return;
     }
 
     setState("checking");
-    if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(async () => {
-      const res = await checkLoginApi(value);
-
-      const raw = (res as any)?.data;
-      const available =
-        res?.ok && raw && typeof raw.available === "boolean"
-          ? (raw.available as boolean)
-          : undefined;
-
-      if (available === true) {
-        setState("ok");
-      } else if (available === false) {
-        setState("taken");
-      } else {
+      try {
+        controller.current = new AbortController();
+        const res = await fetch(
+          `http://localhost:5000/api/check-login?login=${encodeURIComponent(
+            v
+          )}`,
+          { signal: controller.current.signal }
+        );
+        const data = await res.json().catch(() => ({} as any));
+        const taken = !!data?.result;
+        setState(taken ? "taken" : "ok");
+      } catch {
         setState("idle");
       }
-    }, debounceMs) as unknown as number;
+    }, 400);
   };
 
-  useEffect(() => {
-    return () => {
-      if (timer.current) window.clearTimeout(timer.current);
-    };
-  }, []);
-
   const validateStatus =
-    state === "taken" ? "error" : state === "ok" ? "success" : undefined;
+    state === "invalid"
+      ? "error"
+      : state === "taken"
+      ? "error"
+      : state === "ok"
+      ? "success"
+      : state === "checking"
+      ? "validating"
+      : "";
 
-  const help = state === "taken" ? "Логин занят" : undefined;
+  const help =
+    state === "invalid"
+      ? `Логин от ${min} до ${max} символов`
+      : state === "taken"
+      ? "Логин занят"
+      : undefined;
 
   const suffix =
     state === "ok" ? (
       <CheckCircleOutlined style={{ color: "#52c41a" }} />
+    ) : state === "taken" ? (
+      <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
     ) : null;
 
-  return { state, onChangeLogin, validateStatus, help, suffix };
+  return {
+    state,
+    value,
+    onChangeLogin,
+    validateStatus,
+    help,
+    suffix,
+    isTaken: state === "taken",
+    isChecking: state === "checking",
+  };
 }
+
+export default useLoginCheck;
