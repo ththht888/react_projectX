@@ -1,61 +1,35 @@
-import React, { useEffect } from "react";
-import { Button, Form, Input, Modal, message } from "antd";
+import { useState } from "react";
+import { Modal, Form, Input, Button } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { loginApi } from "../../api/auth";
+import { saveUser } from "../../utils/authStore";
 import "./LoginModal.scss";
 
 type Props = {
   open: boolean;
-  onClose: () => void;
-  onOpenRegister: () => void;
-  onLoggedIn: (userName: string) => void;
-  onNotify: (
-    type: "success" | "error" | "warning" | "info",
-    text: string
-  ) => void;
+  onCancel: () => void;
+  onRegisterClick: () => void;
+  onLoginSuccess: (name: string) => void;
 };
 
 const LoginModal: React.FC<Props> = ({
   open,
-  onClose,
-  onOpenRegister,
-  onLoggedIn,
-  onNotify,
+  onCancel,
+  onRegisterClick,
+  onLoginSuccess,
 }) => {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const login = (e as CustomEvent<string>).detail;
-      form.setFieldsValue({ login });
-    };
-    window.addEventListener("prefill-login", handler as EventListener);
-    return () =>
-      window.removeEventListener("prefill-login", handler as EventListener);
-  }, [form]);
-
-  const submit = async () => {
+  const handleSubmit = async (values: { login: string; password: string }) => {
+    setLoading(true);
     try {
-      const v = await form.validateFields();
-      setLoading(true);
-      const res = await loginApi(v.login, v.password);
-      if (!res.ok) {
-        const text = res.message || "Неверные данные";
-        message.error(text);
-        onNotify("error", text);
-        return;
-      }
-      const name = (res.data as any)?.login || v.login;
-      const okText = res.message || "Успешный вход";
-      message.success(okText);
-      onNotify("success", okText);
-      onLoggedIn(name);
-      form.resetFields();
-    } catch (err: any) {
-      if (!(err && Array.isArray(err.errorFields))) {
-        message.error("Не удалось выполнить вход");
-        onNotify("error", "Не удалось выполнить вход");
+      const res = await loginApi(values.login, values.password);
+      if (res && res.ok) {
+        saveUser({ login: values.login });
+        onLoginSuccess(values.login);
+        onCancel();
+      } else {
+        console.log("Ошибка авторизации");
       }
     } finally {
       setLoading(false);
@@ -63,59 +37,37 @@ const LoginModal: React.FC<Props> = ({
   };
 
   return (
-    <Modal
-      title="Вход"
-      open={open}
-      onCancel={onClose}
-      maskClosable
-      destroyOnHidden
-      rootClassName="login-modal"
-      footer={
-        <div className="modal-footer">
-          <Button type="link" onClick={onOpenRegister} disabled={loading}>
-            Регистрация
-          </Button>
-          <Button onClick={onClose} disabled={loading}>
-            Отмена
-          </Button>
-          <Button type="primary" onClick={submit} loading={loading}>
-            Войти
-          </Button>
-        </div>
-      }
-    >
-      <Form form={form} layout="vertical" name="loginForm">
+    <Modal open={open} onCancel={onCancel} footer={null} centered>
+      <h3>Вход</h3>
+      <Form onFinish={handleSubmit} layout="vertical">
         <Form.Item
-          label="Логин"
           name="login"
-          rules={[
-            { required: true, message: "Введите логин" },
-            { min: 5, message: "Не менее 5 символов" },
-            { max: 15, message: "Не более 15 символов" },
-          ]}
+          label="Логин"
+          rules={[{ required: true, message: "Введите логин" }]}
         >
-          <Input
-            placeholder="Логин"
-            prefix={<UserOutlined />}
-            autoComplete="username"
-          />
+          <Input prefix={<UserOutlined />} placeholder="Введите логин" />
         </Form.Item>
-
         <Form.Item
-          label="Пароль"
           name="password"
-          rules={[
-            { required: true, message: "Введите пароль" },
-            { min: 5, message: "Не менее 5 символов" },
-            { max: 15, message: "Не более 15 символов" },
-          ]}
+          label="Пароль"
+          rules={[{ required: true, message: "Введите пароль" }]}
         >
           <Input.Password
-            placeholder="Пароль"
             prefix={<LockOutlined />}
-            autoComplete="current-password"
+            placeholder="Введите пароль"
           />
         </Form.Item>
+        <div className="login-actions">
+          <Button onClick={onRegisterClick} type="link">
+            Регистрация
+          </Button>
+          <div className="login-btns">
+            <Button onClick={onCancel}>Отмена</Button>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              Войти
+            </Button>
+          </div>
+        </div>
       </Form>
     </Modal>
   );

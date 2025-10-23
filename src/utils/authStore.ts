@@ -1,24 +1,16 @@
-export type StoredUser = { login: string };
-
-const KEY = "user";
-
-export function saveUser(user: StoredUser) {
+export const loadUser = () => {
   try {
-    localStorage.setItem(KEY, JSON.stringify(user));
-  } catch {}
-}
-
-export function loadUser(): StoredUser | null {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as StoredUser) : null;
+    const data = localStorage.getItem("user");
+    return data ? JSON.parse(data) : null;
   } catch {
     return null;
   }
-}
+};
 
-export function clearUser() {
-  try {
-    localStorage.removeItem(KEY);
-  } catch {}
-}
+export const saveUser = (user: { login: string }) => {
+  localStorage.setItem("user", JSON.stringify(user));
+};
+
+export const clearUser = () => {
+  localStorage.removeItem("user");
+};
