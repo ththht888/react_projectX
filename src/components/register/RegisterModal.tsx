@@ -26,8 +26,11 @@ const RegisterModal: React.FC<Props> = ({
 
   const handleCheckLogin = async (login: string) => {
     const res = await checkLoginApi(login);
-    const data = await res?.json();
-    setLoginExists(data?.result === true);
+
+    if (res) {
+      const data = await res.json();
+      setLoginExists(data.result === true);
+    }
   };
 
   const handleSubmit = async (values: {
@@ -53,6 +56,8 @@ const RegisterModal: React.FC<Props> = ({
       } else {
         console.log("Ошибка регистрации");
       }
+    } catch(e) {
+      console.log(e)
     } finally {
       setLoading(false);
     }

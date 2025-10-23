@@ -4,13 +4,7 @@ import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { loginApi } from "../../api/auth";
 import { saveUser } from "../../utils/authStore";
 import "./LoginModal.scss";
-
-type Props = {
-  open: boolean;
-  onCancel: () => void;
-  onRegisterClick: () => void;
-  onLoginSuccess: (name: string) => void;
-};
+import { Props } from "../../interfaces/interfaces";
 
 const LoginModal: React.FC<Props> = ({
   open,

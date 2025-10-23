@@ -19,14 +19,16 @@ function Header() {
 
   useEffect(() => {
     const storedUser = loadUser();
-    if (storedUser?.login) setUserName(storedUser.login);
+    if (storedUser?.login) {
+      setUserName(storedUser.login);
+    }
   }, []);
 
   const handleLogout = () => {
     clearUser();
     setUserName(null);
   };
-
+  
   const profileMenu = (
     <Menu
       items={[
@@ -44,7 +46,6 @@ function Header() {
             <span className="logo__textDesktop">GrooveBay</span>
             <span className="logo__textMobile">GB</span>
           </h1>
-
           <Button
             className="catalog-btn"
             type="primary"
@@ -52,10 +53,8 @@ function Header() {
           >
             <span className="btn__text">Каталог</span>
           </Button>
-
           <SearchBox />
         </div>
-
         <div className="header__right">
           {userName ? (
             <Dropdown overlay={profileMenu} placement="bottomRight">
@@ -73,20 +72,17 @@ function Header() {
               <span className="btn__text">Войти</span>
             </Button>
           )}
-
           <Button className="cart-btn" icon={<ShoppingCartOutlined />}>
             <span className="btn__text">Корзина</span>
           </Button>
         </div>
       </div>
-
       <LoginModal
         open={isLoginOpen}
         onCancel={() => setIsLoginOpen(false)}
         onRegisterClick={() => setIsRegisterOpen(true)}
         onLoginSuccess={(name) => setUserName(name)}
       />
-
       <RegisterModal
         open={isRegisterOpen}
         onCancel={() => setIsRegisterOpen(false)}

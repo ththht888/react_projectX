@@ -1,18 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { AutoComplete, Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import "./SearchBox.scss";
 
 const SearchBox: React.FC = () => {
   const [search, setSearch] = useState("");
-  const options = useMemo(
-    () => [
+  const options = [
       { value: "iPhone 15" },
       { value: "Samsung Galaxy" },
       { value: "Футболка" },
-    ],
-    []
-  );
+  ];
   const filtered = options.filter((o) =>
     o.value.toLowerCase().includes(search.toLowerCase())
   );
