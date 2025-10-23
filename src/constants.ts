@@ -3,4 +3,4 @@ export const LOGIN_ENDPOINT = "/login";
 export const REGISTER_ENDPOINT = "/create-client";
 export const CHECK_LOGIN_ENDPOINT = "/check-login";
 
-export const NOTICE_HIDE_TIMEOUT = 4000;
+
