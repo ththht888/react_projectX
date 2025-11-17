@@ -9,14 +9,9 @@ import {
 import { registerApi, checkLoginApi } from "../../api/auth";
 import { saveUser } from "../../utils/authStore";
 import "./RegisterModal.scss";
+import { RegisterModalProps, RegisterInput } from "../../interfaces/interfaces";
 
-type Props = {
-  open: boolean;
-  onCancel: () => void;
-  onRegisterSuccess: (name: string) => void;
-};
-
-const RegisterModal: React.FC<Props> = ({
+const RegisterModal: React.FC<RegisterModalProps> = ({
   open,
   onCancel,
   onRegisterSuccess,
@@ -25,23 +20,25 @@ const RegisterModal: React.FC<Props> = ({
   const [loginExists, setLoginExists] = useState(false);
 
   const handleCheckLogin = async (login: string) => {
-    const res = await checkLoginApi(login);
+    try {
+      const res = await checkLoginApi(login);
 
-    if (res) {
-      const data = await res.json();
-      setLoginExists(data.result === true);
+      if (res) {
+        const data = await res.json();
+        setLoginExists(data.result === true);
+      }
+    } catch (e) {
+      console.log("Ошибка в handleCheckLogin:", e);
     }
   };
 
-  const handleSubmit = async (values: {
-    login: string;
-    password: string;
-    confirmPassword: string;
-    email: string;
-    phone: string;
-  }) => {
+  const handleSubmit = async (
+    values: RegisterInput & { confirmPassword: string }
+  ) => {
     if (values.password !== values.confirmPassword) return;
+
     setLoading(true);
+
     try {
       const res = await registerApi({
         login: values.login,
@@ -49,6 +46,7 @@ const RegisterModal: React.FC<Props> = ({
         email: values.email,
         phone: values.phone,
       });
+
       if (res && res.ok) {
         saveUser({ login: values.login });
         onRegisterSuccess(values.login);
@@ -56,8 +54,8 @@ const RegisterModal: React.FC<Props> = ({
       } else {
         console.log("Ошибка регистрации");
       }
-    } catch(e) {
-      console.log(e)
+    } catch (e) {
+      console.log("Ошибка в handleSubmit RegisterModal:", e);
     } finally {
       setLoading(false);
     }
@@ -78,29 +76,27 @@ const RegisterModal: React.FC<Props> = ({
             onBlur={(e) => handleCheckLogin(e.target.value)}
           />
         </Form.Item>
+
         {loginExists && (
           <p style={{ color: "red" }}>Такой логин уже существует</p>
         )}
+
         <Form.Item
           name="password"
           label="Пароль"
           rules={[{ required: true, message: "Введите пароль" }]}
         >
-          <Input.Password
-            prefix={<LockOutlined />}
-            placeholder="Введите пароль"
-          />
+          <Input.Password prefix={<LockOutlined />} />
         </Form.Item>
+
         <Form.Item
           name="confirmPassword"
           label="Повторите пароль"
           rules={[{ required: true, message: "Повторите пароль" }]}
         >
-          <Input.Password
-            prefix={<LockOutlined />}
-            placeholder="Повторите пароль"
-          />
+          <Input.Password prefix={<LockOutlined />} />
         </Form.Item>
+
         <Form.Item
           name="email"
           label="Email"
@@ -112,15 +108,17 @@ const RegisterModal: React.FC<Props> = ({
             },
           ]}
         >
-          <Input prefix={<MailOutlined />} placeholder="Введите email" />
+          <Input prefix={<MailOutlined />} />
         </Form.Item>
+
         <Form.Item
           name="phone"
           label="Телефон"
           rules={[{ required: true, message: "Введите телефон" }]}
         >
-          <Input prefix={<PhoneOutlined />} placeholder="Введите телефон" />
+          <Input prefix={<PhoneOutlined />} />
         </Form.Item>
+
         <div className="register-btns">
           <Button onClick={onCancel}>Отмена</Button>
           <Button type="primary" htmlType="submit" loading={loading}>

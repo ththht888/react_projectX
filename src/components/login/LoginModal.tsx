@@ -4,9 +4,9 @@ import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { loginApi } from "../../api/auth";
 import { saveUser } from "../../utils/authStore";
 import "./LoginModal.scss";
-import { Props } from "../../interfaces/interfaces";
+import { LoginModalProps } from "../../interfaces/interfaces";
 
-const LoginModal: React.FC<Props> = ({
+const LoginModal: React.FC<LoginModalProps> = ({
   open,
   onCancel,
   onRegisterClick,
@@ -18,6 +18,7 @@ const LoginModal: React.FC<Props> = ({
     setLoading(true);
     try {
       const res = await loginApi(values.login, values.password);
+
       if (res && res.ok) {
         saveUser({ login: values.login });
         onLoginSuccess(values.login);
@@ -25,6 +26,8 @@ const LoginModal: React.FC<Props> = ({
       } else {
         console.log("Ошибка авторизации");
       }
+    } catch (e) {
+      console.log("Ошибка в handleSubmit LoginModal:", e);
     } finally {
       setLoading(false);
     }
@@ -41,6 +44,7 @@ const LoginModal: React.FC<Props> = ({
         >
           <Input prefix={<UserOutlined />} placeholder="Введите логин" />
         </Form.Item>
+
         <Form.Item
           name="password"
           label="Пароль"
@@ -51,6 +55,7 @@ const LoginModal: React.FC<Props> = ({
             placeholder="Введите пароль"
           />
         </Form.Item>
+
         <div className="login-actions">
           <Button onClick={onRegisterClick} type="link">
             Регистрация
