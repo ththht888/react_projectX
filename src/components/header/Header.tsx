@@ -1,30 +1,41 @@
-import React, { useState } from "react";
-import { Button, AutoComplete } from "antd";
+import { useEffect, useState } from "react";
+import { Button, Dropdown, Menu } from "antd";
 import {
-  SearchOutlined,
-  ShoppingCartOutlined,
   LoginOutlined,
-  ProductOutlined,
+  UserOutlined,
+  ShoppingCartOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
+import { loadUser, clearUser } from "../../utils/authStore";
+import RegisterModal from "../register/RegisterModal";
+import LoginModal from "../login/LoginModal";
+import SearchBox from "../search/SearchBox";
 import "./Header.scss";
 
 function Header() {
-  const [search, setSearch] = useState("");
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
 
-  const searchSuggestions = [
-    { value: "iPhone 15" },
-    { value: "Samsung Galaxy" },
-    { value: "Nike Air Max" },
-    { value: "Футболка" },
-    { value: "Джинсы" },
-    { value: "Кроссовки" },
-    { value: "Платье" },
-    { value: "Куртка" },
-    { value: "Рубашка" },
-  ];
+  useEffect(() => {
+    const storedUser = loadUser();
+    if (storedUser?.login) {
+      setUserName(storedUser.login);
+    }
+  }, []);
 
-  const filteredSuggestions = searchSuggestions.filter((item) =>
-    item.value.toLowerCase().includes(search.toLowerCase())
+  const handleLogout = () => {
+    clearUser();
+    setUserName(null);
+  };
+  
+  const profileMenu = (
+    <Menu
+      items={[
+        { key: "profile", label: "Профиль" },
+        { key: "logout", label: "Выйти", onClick: handleLogout },
+      ]}
+    />
   );
 
   return (
@@ -35,39 +46,48 @@ function Header() {
             <span className="logo__textDesktop">GrooveBay</span>
             <span className="logo__textMobile">GB</span>
           </h1>
-          <Button className="catalog-btn" type="primary">
-            <ProductOutlined className="btn__icon" />
+          <Button
+            className="catalog-btn"
+            type="primary"
+            icon={<AppstoreOutlined />}
+          >
             <span className="btn__text">Каталог</span>
           </Button>
-          <div className="search-box">
-            <AutoComplete
-              className="search-input"
-              placeholder="Поиск"
-              value={search}
-              options={filteredSuggestions}
-              onChange={(value) => setSearch(value)}
-              filterOption={false}
-            />
-            <Button
-              className="search-btn"
-              type="primary"
-              icon={<SearchOutlined />}
-              onClick={() => {}}
-            />
-          </div>
+          <SearchBox />
         </div>
-
         <div className="header__right">
-          <Button className="login-btn" type="default">
-            <LoginOutlined className="btn__icon" />
-            <span className="btn__text">Войти</span>
-          </Button>
-          <Button className="cart-btn" type="default">
-            <ShoppingCartOutlined className="btn__icon" />
+          {userName ? (
+            <Dropdown overlay={profileMenu} placement="bottomRight">
+              <Button className="login-btn" icon={<UserOutlined />}>
+                {userName}
+              </Button>
+            </Dropdown>
+          ) : (
+            <Button
+              className="login-btn"
+              type="default"
+              onClick={() => setIsLoginOpen(true)}
+            >
+              <LoginOutlined className="btn__icon" />
+              <span className="btn__text">Войти</span>
+            </Button>
+          )}
+          <Button className="cart-btn" icon={<ShoppingCartOutlined />}>
             <span className="btn__text">Корзина</span>
           </Button>
         </div>
       </div>
+      <LoginModal
+        open={isLoginOpen}
+        onCancel={() => setIsLoginOpen(false)}
+        onRegisterClick={() => setIsRegisterOpen(true)}
+        onLoginSuccess={(name) => setUserName(name)}
+      />
+      <RegisterModal
+        open={isRegisterOpen}
+        onCancel={() => setIsRegisterOpen(false)}
+        onRegisterSuccess={(name) => setUserName(name)}
+      />
     </header>
   );
 }
